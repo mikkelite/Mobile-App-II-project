@@ -34,7 +34,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
+
 import androidx.navigation.NavHostController
 import com.example.project300352053.data.Entry
 import com.example.project300352053.data.EntryDao
@@ -144,7 +144,7 @@ class AddExpenseViewModel(private val entryDao: EntryDao) : ViewModel() {
                 })
             Spacer(modifier = Modifier.padding(10.dp))
             //add date manually
-            Text("Add a Date Manually (PAST EXPENSE-OPTIONAL)")
+            Text("(PAST EXPENSE-OPTIONAL) Add a Date Manually ")
             TextField(value = expenseDate,
                 onValueChange = { viewModel.date.value=it },
                 label = {

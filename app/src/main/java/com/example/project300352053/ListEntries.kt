@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
@@ -26,8 +27,8 @@ import com.example.project300352053.data.EntryDao
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class ListEntries {
-}
+class ListEntries
+
 @Composable
 fun ListEntries(navController: NavHostController, entryDao: EntryDao) {
     var entries by remember { mutableStateOf(emptyList<Entry>()) }
@@ -51,6 +52,10 @@ fun ListEntries(navController: NavHostController, entryDao: EntryDao) {
         Row {
             Text("Enter a Date:")
             TextField(value = enteredDate, onValueChange = { enteredDate = it })
+
+        }
+        Button(onClick = { navController.navigate("exit") },modifier = Modifier.padding(16.dp).fillMaxWidth()) {
+            (Text("exit to main"))
         }
         if (isLoading) {
             CircularProgressIndicator()

@@ -62,6 +62,10 @@ dependencies {
     implementation("com.github.AppDevNext:AndroidChart:3.1.0.25")
 
 
+    implementation("co.yml:ycharts:2.1.0")
+
+
+
     ksp(libs.androidx.room.compiler)
 
     implementation(libs.androidx.room.runtime)

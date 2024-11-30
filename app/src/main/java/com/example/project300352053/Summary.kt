@@ -1,6 +1,7 @@
 package com.example.project300352053
 
 import android.graphics.Color
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -85,7 +86,7 @@ fun Summary(navController: NavHostController, entryDao: EntryDao) {
                 item {
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    Card() {
+                    Card {
                         Spacer(modifier = Modifier.height(20.dp))
                         AddDefaultStackedBarChart(organizedData, month)
                     }
@@ -147,26 +148,46 @@ private fun AddDefaultStackedBarChart(data: Map<String, List<EntryOb>>,Month:Str
 
     var barEntrys= mutableListOf<BarEntry>()
     var maximum=0f
+    var totalsLabel= mutableListOf<String>()
 
 
     val types = arrayOf("Food/Groceries", "Utility", "Recreation", "Transportation", "Healthcare", "Investments", "Personal Care", "Leisure", "Miscellaneous")
     var index=0F
+    var eachDay = mutableSetOf<String>()
+
     for (entry in data) {
 
+        Log.d("Entry", "Date: ${entry.key}, Entries: ${entry.value}")
+        var dataMonth="${entry.key.split("-")[0]}+${entry.key.split("-")[1]}"
+        if(dataMonth=="${Month.split("-")[0]}+${Month.split("-")[1]}"){
+            eachDay.add(entry.key)
+            totalsLabel.add(entry.key)
 
 
 
-        var totals = addTypes(entry.value,Month)
-        //find maximum for putting the chart
-        for(entrys in totals) {
-            if (entrys > maximum) {
-                maximum = entrys
+
+
+            var totals = addTypes(entry.value,Month)
+            //find maximum for putting the chart
+            for(total in totals) {
+
+                if (total > maximum) {
+                    maximum = total
+                }
+
             }
+
+
+
+            Log.d("Totals", "Totals: ${totals}")
+            barEntrys.add(BarEntry(index, totals.toFloatArray(), entry.key))
+            index++
         }
 
 
-        barEntrys.add(BarEntry(index, totals.toFloatArray()))
-        index++
+
+
+
 
 
 
@@ -191,10 +212,15 @@ private fun AddDefaultStackedBarChart(data: Map<String, List<EntryOb>>,Month:Str
     BarDataSet.stackLabels=types
 
 
+
+
+
+
     var BarData= BarData(BarDataSet)
     var BarChart:BarChart= BarChart(LocalContext.current)
 
-    BarChart.axisLeft.axisMaximum=maximum
+
+    BarChart.axisLeft.axisMaximum=maximum+(maximum*0.1f)
     BarChart.setFitBars(true)
 
     BarChart.axisRight.isEnabled = false
@@ -202,13 +228,17 @@ private fun AddDefaultStackedBarChart(data: Map<String, List<EntryOb>>,Month:Str
     BarChart.data=BarData
     BarChart.description.text="For each Day listed expenses"
 
+    BarChart.xAxis.position = XAxis.XAxisPosition.BOTTOM;
+
     BarChart.legend.isEnabled=true
+    BarChart.xAxis.labelCount=barEntrys.size
 
-
-    BarChart.xAxis.setDrawLabels(false)
+    BarChart.xAxis.valueFormatter = IndexAxisValueFormatter(eachDay.toList())
+    BarChart.xAxis.setDrawLabels(true)
     BarChart.xAxis.granularity = 1f
     BarChart.xAxis.labelRotationAngle = -45f
-    BarChart.xAxis.setLabelCount(data.size, false)
+
+
 
     BarChart.xAxis.position=XAxis.XAxisPosition.BOTTOM
     BarChart.legend.maxSizePercent=5f
@@ -227,7 +257,9 @@ private fun AddDefaultStackedBarChart(data: Map<String, List<EntryOb>>,Month:Str
 
 
 
+
     AndroidView(factory = { BarChart}, modifier = Modifier.fillMaxWidth().height(500.dp).padding(10.dp))
+    BarChart.invalidate()
 
 
 

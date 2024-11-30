@@ -1,7 +1,6 @@
 package com.example.project300352053
 
 
-import android.graphics.fonts.FontStyle
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,18 +14,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,23 +34,31 @@ import androidx.compose.ui.layout.ContentScale
 
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 
 import com.example.project300352053.data.AppDatabase
+import com.example.project300352053.data.EntryDao
 
 import com.example.project300352053.ui.theme.Project300352053Theme
-
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope.coroutineContext
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 
 class MainActivity : ComponentActivity() {
@@ -64,25 +70,30 @@ class MainActivity : ComponentActivity() {
                 val navController =  rememberNavController()
 
 
+
                 val db = Room.databaseBuilder(
                     applicationContext,
                     AppDatabase::class.java
                     , "entries"
-                ).build()
+                ).addMigrations(AppDatabase.MIGRATION_1_2).build()
 
                 val entryDao = db.EntryDao()
+                val accountDao=db.AccountDao()
                 val viewModel: AddExpenseViewModel= AddExpenseViewModel(entryDao)
+                val viewModel2: AccountPage= AccountPage(accountDao,entryDao)
+
 
                 NavHost(
                     navController=navController,
                     startDestination = "MainScreen"
                 ){
-                    composable("MainScreen"){ CreateMainPage(navController)}
-                    composable("account"){  }
+                    composable("MainScreen"){ CreateMainPage(navController,entryDao)}
+                    composable("account"){ SetTotals(viewModel2,navController) }
                     composable("addExpense"){ AddExpense(navController,viewModel) }
                     composable("summary"){ Summary(navController,entryDao) }
                     composable("listEntries"){ ListEntries(navController,entryDao) }
-                    composable("exit"){CreateMainPage(navController)  }
+                    composable("exit"){CreateMainPage(navController,entryDao)  }
+                    composable("exitApp"){ exit() }
 
                 }
 
@@ -94,8 +105,9 @@ class MainActivity : ComponentActivity() {
 
 
 
+@OptIn(DelicateCoroutinesApi::class)
 @Composable
-fun CreateMainPage(navController: NavHostController) {
+fun CreateMainPage(navController: NavHostController,entryDao: EntryDao) {
     val context= LocalContext.current
     Box(
         modifier = Modifier.fillMaxSize()
@@ -227,7 +239,7 @@ fun CreateMainPage(navController: NavHostController) {
               , horizontalAlignment = Alignment.CenterHorizontally) {
                 //exit button
                 Button(
-                    onClick = { navController.navigate("exit") },
+                    onClick = { navController.navigate("exitApp") },
                     modifier = Modifier.width(150.dp),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp)
                     //colors for the buttons
@@ -247,7 +259,13 @@ fun CreateMainPage(navController: NavHostController) {
                 Button(
                     onClick =
                     {
-                        context.deleteDatabase("entries")
+                        CoroutineScope(coroutineContext).launch(Dispatchers.IO) {
+                            entryDao.nuketable()
+
+
+                        }
+
+
                     },
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
                     //colors for the buttons
@@ -267,19 +285,3 @@ fun CreateMainPage(navController: NavHostController) {
     }
 }
 
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    Project300352053Theme {
-        val context = LocalContext.current
-        val db = Room.databaseBuilder(
-            context,
-            AppDatabase::class.java, "entries"
-        ).build()
-
-        val entryDao = db.EntryDao()
-        val navController = rememberNavController()
-        CreateMainPage(navController)
-    }
-}
