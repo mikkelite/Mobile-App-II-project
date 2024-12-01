@@ -18,13 +18,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BasicAlertDialog
 
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -227,6 +234,8 @@ fun CreateMainPage(navController: NavHostController,entryDao: EntryDao) {
 
 
             Spacer(modifier = Modifier.height(20.dp))
+            var showDialog by remember { mutableStateOf(false)}
+
 
 
             //COLUMN FOR EXIT AND DELETE DATABASE BUTTONS
@@ -254,17 +263,13 @@ fun CreateMainPage(navController: NavHostController,entryDao: EntryDao) {
                     Text(text = "Exit",textDecoration = TextDecoration.Underline)
 
                 }
+                Spacer(modifier = Modifier.height(30.dp))
 
                 //delete database button
                 Button(
                     onClick =
                     {
-                        CoroutineScope(coroutineContext).launch(Dispatchers.IO) {
-                            entryDao.nuketable()
-
-
-                        }
-
+                        showDialog = true
 
                     },
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
@@ -276,8 +281,36 @@ fun CreateMainPage(navController: NavHostController,entryDao: EntryDao) {
                         disabledContentColor = Color.White
                     )
                 ) {
-                    Text(text = "Clear Database")
+                    Text(text = "Clear Database of Expenses")
                 }
+                if (showDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showDialog = false },
+                        title = { Text("Confirmation") },
+                        text = { Text("Are you sure you want to proceed?") },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                //picks yes and deletes entries
+                                showDialog = false
+                                    CoroutineScope(coroutineContext).launch(Dispatchers.IO) {
+                                        entryDao.nuketable()
+                                    }
+
+                            }) {
+                                Text("Yes")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = {
+                                // Handle "No" action here
+                                showDialog = false
+                            }) {
+                                Text("No")
+                            }
+                        }
+                    )
+                }
+
             }
             Spacer(modifier = Modifier.height(20.dp))
 

@@ -206,7 +206,7 @@ private fun AddDefaultStackedBarChart(data: Map<String, List<EntryOb>>,Month:Str
             Color.CYAN,
             Color.LTGRAY,
             Color.DKGRAY,
-            Color.BLACK
+            Color.WHITE
 
         )
     BarDataSet.stackLabels=types

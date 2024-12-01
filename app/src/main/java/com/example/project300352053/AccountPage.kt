@@ -2,7 +2,7 @@ package com.example.project300352053
 
 
 
-import android.app.slice.SliceManager
+
 import android.graphics.Typeface
 import android.util.Log
 
@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -80,8 +81,9 @@ class AccountPage(private val accountDoa: AccountDao,private val entryDao: Entry
         getEntries()
         getMapEntrys()
 
+
     }
-   fun getAccounts() {
+    fun getAccounts() {
         viewModelScope.launch(Dispatchers.IO) {
             totals = accountDoa.getAllAccounts()
         }
@@ -91,26 +93,6 @@ class AccountPage(private val accountDoa: AccountDao,private val entryDao: Entry
             accountDoa.insert(account)
 
         }
-    }
-
-    fun getTotals(){
-
-        if (!totals.isEmpty()) {
-
-            Account.value = totals[0]
-            Log.d("getTotals", "Totals: $Account.value")
-
-
-        }
-
-
-    }
-    fun updateTotals(Account: Account) {
-        viewModelScope.launch(Dispatchers.IO) {
-
-            accountDoa.update(Account)
-        }
-
     }
     //all for making the pie chart
     fun getEntries(){
@@ -122,68 +104,78 @@ class AccountPage(private val accountDoa: AccountDao,private val entryDao: Entry
         mapEntrys.value=organizeData(entrys.value)
         Log.d("init", "init stuff: ${mapEntrys.value}")
     }
+
+    fun getTotals(){
+        if (!totals.isEmpty()) {
+            Account.value = totals[0]
+            Log.d("getTotals", "Totals: $Account.value")
+        }
+    }
+    fun updateTotals(Account: Account) {
+        viewModelScope.launch(Dispatchers.IO) {
+            accountDoa.update(Account)
+        }
+    }
+
+
     //each months data
     fun getTotals(data: Map<String, List<EntryOb>>,currentMonth:String):MutableMap<String,Float> {
         var totals2 = mutableMapOf<String,Float>()
         for (entry in data) {
             totals2 = addTypes(entry.value, currentMonth,totals2)
-
         }
-        return totals2
+    return totals2
     }
     //get totals for each slice of the pie chart
-        fun addTypes(data: List<EntryOb>, Month: String, totals2: MutableMap<String, Float>):MutableMap<String,Float> {
-            var totals= mutableMapOf<String,Float>()
-                if(totals2.size==0)
-                {
-                    totals["Food/Groceries"]=0f
-                    totals["Utility"]=0f
-                    totals["Recreation"]=0f
-                    totals["Transportation"]=0f
-                    totals["Insurance and Healthcare"]=0f
-                    totals["Savings and Investments"]=0f
-                    totals["Personal Care"]=0f
-                    totals["Entertainment and Leisure"]=0f
-                    totals["Miscellaneous"]=0f
-                    for (entry in data) {
-                        var entryMonth: String =
-                            "${entry.dateTime.split("-")[0]}-${entry.dateTime.split("-")[1]}"
-                        if (entryMonth == Month) {
-                            totals[entry.type] = (totals[entry.type] ?: 0f) + entry.amount.toFloat()
+    fun addTypes(data: List<EntryOb>, Month: String, totals2: MutableMap<String, Float>):MutableMap<String,Float> {
+        var totals= mutableMapOf<String,Float>()
+            if(totals2.size==0)
+            {
+                totals["Food/Groceries"]=0f
+                totals["Utility"]=0f
+                totals["Recreation"]=0f
+                totals["Transportation"]=0f
+                totals["Insurance and Healthcare"]=0f
+                totals["Savings and Investments"]=0f
+                totals["Personal Care"]=0f
+                totals["Entertainment and Leisure"]=0f
+                totals["Miscellaneous"]=0f
+                for (entry in data) {
+                    var entryMonth: String =
+                        "${entry.dateTime.split("-")[0]}-${entry.dateTime.split("-")[1]}"
+                    if (entryMonth == Month) {
+                        totals[entry.type] = (totals[entry.type] ?: 0f) + entry.amount.toFloat()
 
-                        }
                     }
-                    return totals
+                }
+                return totals
+
+            }
+
+            for (entry in data) {
+                var entryMonth: String =
+                    "${entry.dateTime.split("-")[0]}-${entry.dateTime.split("-")[1]}"
+                if (entryMonth == Month) {
+                    totals2[entry.type] = (totals2[entry.type] ?: 0f) + entry.amount.toFloat()
 
                 }
-                if(totals2.size!=0) {
+            }
+            return totals2
 
 
-                    for (entry in data) {
-                        var entryMonth: String =
-                            "${entry.dateTime.split("-")[0]}-${entry.dateTime.split("-")[1]}"
-                        if (entryMonth == Month) {
-                            totals2[entry.type] = (totals2[entry.type] ?: 0f) + entry.amount.toFloat()
-
-                        }
-                    }
-                    return totals2
-                }
-
-
-
-
-
-            return totals
-        }
-
-
-
+    }
 
 }
 
 @Composable
 fun SetTotals(viewModel2: AccountPage,navController: NavHostController) {
+    LaunchedEffect(viewModel2) {
+
+        viewModel2.getMapEntrys()
+        viewModel2.getTotals()
+
+
+    }
 
 
     val data by viewModel2.mapEntrys.collectAsState()
@@ -223,12 +215,7 @@ fun SetTotals(viewModel2: AccountPage,navController: NavHostController) {
     personalCareOld=Account.PersonalCare
     miscellaneousOld=Account.MIscellaneous
     //view model data collection
-    LaunchedEffect(viewModel2) {
 
-        viewModel2.getMapEntrys()
-
-        viewModel2.getTotals()
-    }
 
 
     var currentMonth= ""
@@ -243,7 +230,7 @@ fun SetTotals(viewModel2: AccountPage,navController: NavHostController) {
     for (entry in totals) {
         Log.d("SetTotals", "Totals: $entry")
         if(entry.value!=0f) {
-            var color=Random.nextInt(0,colors.size)
+            val color=Random.nextInt(0,colors.size)
             slices.add(PieChartData.Slice(entry.key, entry.value, colors[color]))
             colors.removeAt(color)
 
@@ -251,15 +238,15 @@ fun SetTotals(viewModel2: AccountPage,navController: NavHostController) {
 
     }
     //totals to see if over budget
-    var foodTotal by remember { mutableStateOf(0f)}
-    var utilityTotal by remember { mutableStateOf(0f)}
-    var recreationTotal by remember { mutableStateOf(0f)}
-    var transportationTotal by remember { mutableStateOf(0f)}
-    var healthcareTotal by remember { mutableStateOf(0f)}
-    var investmentsTotal by remember { mutableStateOf(0f)}
-    var personalCareTotal by remember { mutableStateOf(0f)}
-    var entertainmentTotal by remember { mutableStateOf(0f)}
-    var miscellaneousTotal by remember { mutableStateOf(0f)}
+    var foodTotal by remember { mutableFloatStateOf(0f) }
+    var utilityTotal by remember { mutableFloatStateOf(0f) }
+    var recreationTotal by remember { mutableFloatStateOf(0f) }
+    var transportationTotal by remember { mutableFloatStateOf(0f) }
+    var healthcareTotal by remember { mutableFloatStateOf(0f) }
+    var investmentsTotal by remember { mutableFloatStateOf(0f) }
+    var personalCareTotal by remember { mutableFloatStateOf(0f) }
+    var entertainmentTotal by remember { mutableFloatStateOf(0f) }
+    var miscellaneousTotal by remember { mutableFloatStateOf(0f) }
 
 
     for (entry in totals) {
