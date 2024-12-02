@@ -49,6 +49,10 @@ interface EntryDao {
     @Query("DELETE FROM entries")
     suspend fun nuketable()
 
+    @Query("DELETE FROM entries WHERE uid = :entryId")
+    suspend fun deleteEntryById(entryId: Int)
+
+
 
 
 }
@@ -56,6 +60,8 @@ interface EntryDao {
 interface AccountDao {
     @Insert
     suspend fun insert(account: Account)
+    @Query("DELETE FROM Accounts")
+    suspend fun nuketableAccounts()
 
     @Query("SELECT * FROM Accounts")
     suspend fun getAllAccounts():List<Account>

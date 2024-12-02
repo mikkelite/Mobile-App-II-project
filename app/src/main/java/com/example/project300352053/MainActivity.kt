@@ -64,7 +64,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope.coroutineContext
-import kotlinx.coroutines.coroutineScope
+
 import kotlinx.coroutines.launch
 
 
@@ -292,9 +292,10 @@ fun CreateMainPage(navController: NavHostController,entryDao: EntryDao) {
                             TextButton(onClick = {
                                 //picks yes and deletes entries
                                 showDialog = false
-                                    CoroutineScope(coroutineContext).launch(Dispatchers.IO) {
-                                        entryDao.nuketable()
-                                    }
+                                CoroutineScope(coroutineContext).launch(Dispatchers.IO) {
+                                    entryDao.nuketable()
+
+                                }
 
                             }) {
                                 Text("Yes")
@@ -304,6 +305,7 @@ fun CreateMainPage(navController: NavHostController,entryDao: EntryDao) {
                             TextButton(onClick = {
                                 // Handle "No" action here
                                 showDialog = false
+
                             }) {
                                 Text("No")
                             }
@@ -317,4 +319,5 @@ fun CreateMainPage(navController: NavHostController,entryDao: EntryDao) {
         }
     }
 }
+
 

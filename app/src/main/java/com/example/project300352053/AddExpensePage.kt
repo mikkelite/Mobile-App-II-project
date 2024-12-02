@@ -1,8 +1,6 @@
 package com.example.project300352053
 
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,7 +19,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,11 +37,8 @@ import com.example.project300352053.data.Entry
 import com.example.project300352053.data.EntryDao
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
 
@@ -54,25 +48,87 @@ class AddExpenseViewModel(private val entryDao: EntryDao) : ViewModel() {
     var expenseGroup = MutableStateFlow("{type not selected}")
     var expenseDescription = MutableStateFlow(" ")
     var date = MutableStateFlow("")
+    var isErrorAmount = MutableStateFlow(false)
+    var isGroupError = MutableStateFlow(false)
+    var isDateError = MutableStateFlow(false)
+    var success = MutableStateFlow(false)
 
 
-    fun addExpense(dateArg:String): Boolean {
-        viewModelScope.launch(Dispatchers.IO) {
-            val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-            val currentTime=dateFormat.format(Date())
-            if(dateArg.isEmpty()){
-                date.value = currentTime
-            }
+    //check if the expense is valid
+    fun works(dateArg:String):Boolean{
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        val currentTime=dateFormat.format(Date())
+        val regex=Regex("^(19|20)\\d\\d-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01]).*\$")
+        var testVariable:Boolean
+        testVariable=regex.matches(dateArg)
+        Log.d("is Successful regex", "${testVariable}")
+        //date errors or fill in values
+        if (dateArg.isEmpty()) {
+            date.value = currentTime
+        } else if (regex.matches(dateArg)) {
+            date.value = dateArg
+            isDateError.value = false // Clear error if the date is valid
+        } else {
+            isDateError.value = true // Invalid date
+        }
 
-            val expenseAmount = expenseText.value.toIntOrNull()
-            println("${expenseAmount} is the expense Amount")
-            val newEntry = Entry(0,expenseText.value.toInt(), expenseDescription.value, expenseGroup.value, date.value)
-            entryDao.insertAll(newEntry)
-            expenseText.value = ""
-            expenseDescription.value=""
+        //errors for the group selection
+        if(expenseGroup.value=="{type not selected}"){
+            isGroupError.value=true
+        } else{
+            isGroupError.value=false
 
         }
-        return true
+
+        //amount error checking
+        if(expenseText.value.isEmpty()){
+            isErrorAmount.value=true
+
+        } else if(expenseText.value.toIntOrNull()==null){
+            isErrorAmount.value=true
+        } else{
+            isErrorAmount.value=false
+        }
+        //no errors
+        if(isErrorAmount.value != true && isGroupError.value != true && isDateError.value != true) {
+
+            success.value=true
+        } else{
+            success.value=false
+        }
+        Log.d("is Successful after checking error variables", "${success.value}")
+        return success.value
+
+    }
+    //add the expense
+
+    fun addExpense(){
+        viewModelScope.launch(Dispatchers.IO) {
+
+            if(success.value) {
+
+
+
+
+                val newEntry = Entry(
+                    0,
+                    expenseText.value.toInt(),
+                    expenseDescription.value,
+                    expenseGroup.value,
+                    date.value
+                )
+                entryDao.insertAll(newEntry)
+                expenseText.value = ""
+                expenseDescription.value = ""
+                expenseGroup.value="{type not selected}"
+
+
+
+
+            }
+
+        }
+
     }
 }
 
@@ -80,11 +136,15 @@ class AddExpenseViewModel(private val entryDao: EntryDao) : ViewModel() {
     fun AddExpense(navController: NavHostController,viewModel: AddExpenseViewModel){
         var menuExpanded by remember { mutableStateOf(false) }
         var succesText by remember { mutableStateOf("") }
-
+        var errorAmount = viewModel.isErrorAmount.collectAsState()
+        var errorGroup = viewModel.isGroupError.collectAsState()
+        var dateError = viewModel.isDateError.collectAsState()
         val expenseText by viewModel.expenseText.collectAsState()
         val expenseGroup by viewModel.expenseGroup.collectAsState()
         val expenseDescription by viewModel.expenseDescription.collectAsState()
         val expenseDate by viewModel.date.collectAsState()
+        var success = remember { mutableStateOf(false) }
+
 
 
 
@@ -106,12 +166,12 @@ class AddExpenseViewModel(private val entryDao: EntryDao) : ViewModel() {
                 label = { Text("enter expense value: ") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             )
+            if(errorAmount.value){
+                Text("Please enter a value for the expense\n or enter a number without decimals")
+            }
 
             Row {
-
                 TextButton(onClick = { menuExpanded = true }, Modifier.padding(10.dp)) {
-
-
                     Text("Type")
                     Icon(Icons.Rounded.Edit, contentDescription = "Localized description")
                 }
@@ -125,6 +185,7 @@ class AddExpenseViewModel(private val entryDao: EntryDao) : ViewModel() {
                         DropdownMenuItem(text = { Text(option) },
                             onClick = {
                                 viewModel.expenseGroup.value = option
+
                                 menuExpanded = false
                             }
                         )
@@ -135,6 +196,9 @@ class AddExpenseViewModel(private val entryDao: EntryDao) : ViewModel() {
             //display the expense group
             Text("Expense group selected:")
             Text(expenseGroup)
+            if(errorGroup.value){
+                Text("Please select a type for the expense")
+            }
             Spacer(modifier = Modifier.height(10.dp))
             Text("Description")
             TextField(value = expenseDescription,
@@ -152,6 +216,11 @@ class AddExpenseViewModel(private val entryDao: EntryDao) : ViewModel() {
                 }
 
             )
+            if(dateError.value){
+                Text("Please enter a date in the format\n " +
+                        "yyyy-MM-dd HH:mm:ss with " +
+                        "\nyyyy-mm-dd being mandatory")
+            }
             Spacer(modifier = Modifier.padding(10.dp))
 
 
@@ -160,16 +229,17 @@ class AddExpenseViewModel(private val entryDao: EntryDao) : ViewModel() {
             //
             Button(
                 onClick = {
-                    if(viewModel.expenseText.value.isNotEmpty())
-                        {
-                            if(viewModel.addExpense(expenseDate)){
+                    success.value=viewModel.works(expenseDate)
+
+                    if(viewModel.expenseText.value.isNotEmpty()) {
+                            if(success.value){
+                                viewModel.addExpense()
                                 succesText="Expense added successfully"
                             }
                             else{
                                 succesText="Expense not added something went wrong"
                             }
-                        }
-                    else{
+                    } else{
                         succesText="Please enter a value for the expense and select a type"
                     }
                 }
