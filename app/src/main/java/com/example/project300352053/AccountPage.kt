@@ -74,14 +74,16 @@ class AccountPage(private val accountDoa: AccountDao, private val entryDao: Entr
             getAccounts()
             getEntries()
 
-
-
-
         }
-
-
         getMapEntrys()
 
+    }
+    fun getInfo(){
+        viewModelScope.launch(Dispatchers.IO) {
+            getAccounts()
+            getEntries()
+
+        }
 
     }
 
@@ -118,7 +120,7 @@ class AccountPage(private val accountDoa: AccountDao, private val entryDao: Entr
     }
 
     suspend fun updateTotals(Account: Account) {
-            accountDoa.update(Account)
+        accountDoa.update(Account)
     }
 
 
@@ -192,6 +194,8 @@ fun SetTotals(viewModel2: AccountPage, navController: NavHostController) {
         viewModel2.getMapEntrys()
 
     }
+    viewModel2.getInfo()
+
 
 
 
@@ -492,5 +496,3 @@ fun SetTotals(viewModel2: AccountPage, navController: NavHostController) {
 
     }
 }
-
-

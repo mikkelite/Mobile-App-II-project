@@ -3,16 +3,16 @@ package com.example.project300352053
 import android.graphics.Color
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.runtime.Composable
@@ -81,34 +81,44 @@ fun Summary(navController: NavHostController, entryDao: EntryDao) {
         var EachMonth=HashSet<String>()
         //get the unique months based on the year
         for (entry in entries) {
-            var Month: String = "${entry.dateTime.split("-")[0]}-${entry.dateTime.split("-")[1]}"
-            EachMonth.add(Month)
+            var month: String = "${entry.dateTime.split("-")[0]}-${entry.dateTime.split("-")[1]}"
+            EachMonth.add(month)
+            Log.d("Month", "Month: $entry")
 
         }
-        if(EachMonth.size==0) {
-
-
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth().padding(10.dp).height(60.dp)
+        if(EachMonth.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
+                Button(onClick = { Log.d("Test","test")
+                navController.navigate("MainScreen")
+                }
 
-                Button(onClick = { navController.navigate("exit") }) { Text("back to main page") }
+                ) {
+                    Text("Back to Main Page")
+                }
+                Text("No Data")
             }
         }
+        else {
 
 
-        LazyColumn(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxSize()
+            ) {
 
-            //for each month make a bar graph
-            for (month in EachMonth) {
-                item {
-                    Spacer(modifier = Modifier.height(20.dp))
-                    Button(onClick = { navController.navigate("exit") }) { Text("back to main page") }
+                //for each month make a bar graph
+                for (month in EachMonth) {
+                    item {
+                        Spacer(modifier = Modifier.height(40.dp))
+                        Button(onClick = { navController.navigate("exit") }) { Text("back to main page") }
 
-                    Card (){
-                        Spacer(modifier = Modifier.height(20.dp))
-                        AddDefaultStackedBarChart(organizedData, month)
+                        Card() {
+                            Spacer(modifier = Modifier.height(20.dp))
+                            AddDefaultStackedBarChart(organizedData, month)
+                        }
                     }
                 }
             }
@@ -183,13 +193,13 @@ private fun AddDefaultStackedBarChart(data: Map<String, List<EntryOb>>,Month:Str
             eachDay.add(entry.key)
             totalsLabel.add(entry.key)
 
-            var totals = addTypes(entry.value,Month)
+            val totals = addTypes(entry.value,Month)
             //find maximum for putting the chart
             for(total in totals) {
 
-                if (total > maximum) {
-                    maximum = total
-                }
+
+                maximum += total
+
 
             }
 
@@ -210,7 +220,7 @@ private fun AddDefaultStackedBarChart(data: Map<String, List<EntryOb>>,Month:Str
 
 
     }
-   var BarDataSet= BarDataSet(barEntrys,"${Month}")
+   var BarDataSet= BarDataSet(barEntrys, Month)
     //
     BarDataSet.setColors(
 
@@ -227,16 +237,16 @@ private fun AddDefaultStackedBarChart(data: Map<String, List<EntryOb>>,Month:Str
         )
     BarDataSet.stackLabels=types
 
-    var BarData= BarData(BarDataSet)
+    var barData= BarData(BarDataSet)
     var BarChart:BarChart= BarChart(LocalContext.current)
 
 
-    BarChart.axisLeft.axisMaximum=maximum+(maximum*0.1f)
+    BarChart.axisLeft.axisMaximum=maximum + (.1f*maximum)
     BarChart.setFitBars(true)
 
     BarChart.axisRight.isEnabled = false
 
-    BarChart.data=BarData
+    BarChart.data=barData
     BarChart.description.text="For each Day listed expenses"
 
     BarChart.xAxis.position = XAxis.XAxisPosition.BOTTOM;

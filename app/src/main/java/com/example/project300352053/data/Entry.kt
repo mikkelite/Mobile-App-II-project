@@ -45,7 +45,7 @@ interface EntryDao {
     suspend fun getAll(): List<Entry>
 
     @Insert
-    fun insertAll(vararg entries: Entry)
+    suspend fun insertAll(vararg entries: Entry)
     @Query("DELETE FROM entries")
     suspend fun nuketable()
 
@@ -66,7 +66,7 @@ interface AccountDao {
     @Query("SELECT * FROM Accounts")
     suspend fun getAllAccounts():List<Account>
     @Update()
-    fun update(account: Account)
+    suspend fun update(account: Account)
 
 
 

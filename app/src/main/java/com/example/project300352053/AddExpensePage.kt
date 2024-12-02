@@ -12,6 +12,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -19,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,7 +37,9 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import com.example.project300352053.data.Entry
 import com.example.project300352053.data.EntryDao
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -102,16 +106,9 @@ class AddExpenseViewModel(private val entryDao: EntryDao) : ViewModel() {
     }
     //add the expense
 
-    fun addExpense(){
-        viewModelScope.launch(Dispatchers.IO) {
-
+    suspend fun addExpense(){
             if(success.value) {
-
-
-
-
-                val newEntry = Entry(
-                    0,
+                val newEntry = Entry(0,
                     expenseText.value.toInt(),
                     expenseDescription.value,
                     expenseGroup.value,
@@ -122,12 +119,9 @@ class AddExpenseViewModel(private val entryDao: EntryDao) : ViewModel() {
                 expenseDescription.value = ""
                 expenseGroup.value="{type not selected}"
 
-
-
-
             }
 
-        }
+
 
     }
 }
@@ -144,7 +138,7 @@ class AddExpenseViewModel(private val entryDao: EntryDao) : ViewModel() {
         val expenseDescription by viewModel.expenseDescription.collectAsState()
         val expenseDate by viewModel.date.collectAsState()
         var success = remember { mutableStateOf(false) }
-
+        var isLoading by remember { mutableStateOf(false) }
 
 
 
@@ -233,8 +227,12 @@ class AddExpenseViewModel(private val entryDao: EntryDao) : ViewModel() {
 
                     if(viewModel.expenseText.value.isNotEmpty()) {
                             if(success.value){
-                                viewModel.addExpense()
+                                isLoading=true
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    viewModel.addExpense()
+                                }
                                 succesText="Expense added successfully"
+                                isLoading=false
                             }
                             else{
                                 succesText="Expense not added something went wrong"
@@ -247,10 +245,14 @@ class AddExpenseViewModel(private val entryDao: EntryDao) : ViewModel() {
 
             )
 
+
             {
 
                 Text(text = "Submit Expense")
 
+            }
+            if (isLoading) {
+                CircularProgressIndicator()
             }
 
 

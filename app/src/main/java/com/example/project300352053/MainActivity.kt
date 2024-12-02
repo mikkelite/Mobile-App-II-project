@@ -87,7 +87,7 @@ class MainActivity : ComponentActivity() {
                 val entryDao = db.EntryDao()
                 val accountDao=db.AccountDao()
                 val viewModel: AddExpenseViewModel= AddExpenseViewModel(entryDao)
-                val viewModel2: AccountPage= AccountPage(accountDao,entryDao)
+                val accountPage=AccountPage(accountDao,entryDao)
 
 
                 NavHost(
@@ -95,7 +95,7 @@ class MainActivity : ComponentActivity() {
                     startDestination = "MainScreen"
                 ){
                     composable("MainScreen"){ CreateMainPage(navController,entryDao)}
-                    composable("account"){ SetTotals(viewModel2,navController) }
+                    composable("account"){ SetTotals(accountPage,navController) }
                     composable("addExpense"){ AddExpense(navController,viewModel) }
                     composable("summary"){ Summary(navController,entryDao) }
                     composable("listEntries"){ ListEntries(navController,entryDao) }
@@ -292,7 +292,7 @@ fun CreateMainPage(navController: NavHostController,entryDao: EntryDao) {
                             TextButton(onClick = {
                                 //picks yes and deletes entries
                                 showDialog = false
-                                CoroutineScope(coroutineContext).launch(Dispatchers.IO) {
+                                CoroutineScope(Dispatchers.IO).launch() {
                                     entryDao.nuketable()
 
                                 }
