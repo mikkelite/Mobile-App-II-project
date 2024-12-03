@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
+import co.yml.charts.common.extensions.isNotNull
 import co.yml.charts.common.model.PlotType
 import co.yml.charts.ui.piechart.charts.PieChart
 import co.yml.charts.ui.piechart.models.PieChartConfig
@@ -95,7 +96,9 @@ class AccountPage(private val accountDoa: AccountDao, private val entryDao: Entr
 
     suspend fun addAccount(account: Account) {
         viewModelScope.launch(Dispatchers.IO) {
-            accountDoa.insert(account)
+            if(totals.isEmpty()) {
+                accountDoa.insert(account)
+            }
 
         }
     }
