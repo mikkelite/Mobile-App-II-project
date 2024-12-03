@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.BasicAlertDialog
 
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
@@ -27,7 +26,6 @@ import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,17 +41,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
-import androidx.room.migration.Migration
-import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.project300352053.data.AccountDao
 
 
 import com.example.project300352053.data.AppDatabase
@@ -63,7 +58,6 @@ import com.example.project300352053.ui.theme.Project300352053Theme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope.coroutineContext
 
 import kotlinx.coroutines.launch
 
@@ -94,12 +88,12 @@ class MainActivity : ComponentActivity() {
                     navController=navController,
                     startDestination = "MainScreen"
                 ){
-                    composable("MainScreen"){ CreateMainPage(navController,entryDao)}
+                    composable("MainScreen"){ CreateMainPage(navController, entryDao,accountDao)}
                     composable("account"){ SetTotals(accountPage,navController) }
                     composable("addExpense"){ AddExpense(navController,viewModel) }
                     composable("summary"){ Summary(navController,entryDao) }
                     composable("listEntries"){ ListEntries(navController,entryDao) }
-                    composable("exit"){CreateMainPage(navController,entryDao)  }
+                    composable("exit"){CreateMainPage(navController, entryDao,accountDao)  }
                     composable("exitApp"){ exit() }
 
                 }
@@ -114,7 +108,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(DelicateCoroutinesApi::class)
 @Composable
-fun CreateMainPage(navController: NavHostController,entryDao: EntryDao) {
+fun CreateMainPage(navController: NavHostController, entryDao: EntryDao, accountDao: AccountDao) {
     val context= LocalContext.current
     Box(
         modifier = Modifier.fillMaxSize()
@@ -294,6 +288,7 @@ fun CreateMainPage(navController: NavHostController,entryDao: EntryDao) {
                                 showDialog = false
                                 CoroutineScope(Dispatchers.IO).launch() {
                                     entryDao.nuketable()
+                                    accountDao.nuketableAccounts()
 
                                 }
 

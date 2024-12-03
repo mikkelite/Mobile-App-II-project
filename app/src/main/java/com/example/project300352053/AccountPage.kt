@@ -464,13 +464,20 @@ fun SetTotals(viewModel2: AccountPage, navController: NavHostController) {
         )
         Button(onClick = {
             CoroutineScope(Dispatchers.IO).launch() {
-                viewModel2.addAccount(
-                    Account(
-                        0, food.toInt(), utility.toInt(),
-                        recreation.toInt(), transportation.toInt(), healthcare.toInt(),
-                        investments.toInt(), personalCare.toInt(), miscellaneous.toInt()
+                try {
+                    viewModel2.addAccount(
+                        Account(
+                            0, food.toInt(), utility.toInt(),
+                            recreation.toInt(), transportation.toInt(), healthcare.toInt(),
+                            investments.toInt(), personalCare.toInt(), miscellaneous.toInt()
+                        )
                     )
-                )
+                }
+                catch (NumberFormatException: Exception) {
+                    error = NumberFormatException.message.toString()
+                    Log.d("NumberFormatException", "NumberFormatException")
+
+                }
 
             }
             navController.navigate("account")
