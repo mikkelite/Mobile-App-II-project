@@ -286,7 +286,7 @@ fun CreateMainPage(navController: NavHostController, entryDao: EntryDao, account
                             TextButton(onClick = {
                                 //picks yes and deletes entries
                                 showDialog = false
-                                CoroutineScope(Dispatchers.IO).launch() {
+                                CoroutineScope(Dispatchers.IO).launch {
                                     entryDao.nuketable()
                                     accountDao.nuketableAccounts()
 

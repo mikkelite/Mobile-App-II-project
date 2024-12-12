@@ -30,8 +30,7 @@ import kotlinx.coroutines.delay
 
 import kotlin.system.exitProcess
 
-class Exit {
-}
+class Exit
 
 @Composable
 fun exit(){
@@ -45,7 +44,7 @@ fun exit(){
             repeatMode = RepeatMode.Reverse
         )
     )
-    Box(){
+    Box {
         Image(painter = painterResource( id = R.drawable.pexels_karolina_grabowska_4475523 ),
             contentDescription = "Background Image",
             modifier = Modifier.graphicsLayer(alpha = alpha).fillMaxHeight(),

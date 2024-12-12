@@ -115,7 +115,7 @@ fun Summary(navController: NavHostController, entryDao: EntryDao) {
                         Spacer(modifier = Modifier.height(40.dp))
                         Button(onClick = { navController.navigate("exit") }) { Text("back to main page") }
 
-                        Card() {
+                        Card {
                             Spacer(modifier = Modifier.height(20.dp))
                             AddDefaultStackedBarChart(organizedData, month)
                         }
@@ -249,7 +249,7 @@ private fun AddDefaultStackedBarChart(data: Map<String, List<EntryOb>>,Month:Str
     BarChart.data=barData
     BarChart.description.text="For each Day listed expenses"
 
-    BarChart.xAxis.position = XAxis.XAxisPosition.BOTTOM;
+    BarChart.xAxis.position = XAxis.XAxisPosition.BOTTOM
 
     BarChart.legend.isEnabled=true
     BarChart.xAxis.labelCount=barEntrys.size

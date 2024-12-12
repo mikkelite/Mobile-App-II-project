@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
-import co.yml.charts.common.extensions.isNotNull
 import co.yml.charts.common.model.PlotType
 import co.yml.charts.ui.piechart.charts.PieChart
 import co.yml.charts.ui.piechart.models.PieChartConfig
@@ -42,7 +41,7 @@ import com.example.project300352053.data.EntryOb
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope.coroutineContext
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -53,8 +52,11 @@ import kotlin.random.Random
 
 class AccountPage(private val accountDoa: AccountDao, private val entryDao: EntryDao) :
     ViewModel() {
+
+
     var Account = MutableStateFlow(Account(0, 0, 0, 0, 0, 0, 0, 0, 0))
-    var totals = emptyList<Account>()
+    var totalsAccount = emptyList<Account>()
+
 
     var entrys = MutableStateFlow(emptyList<Entry>())
     var mapEntrys = MutableStateFlow(emptyMap<String, List<EntryOb>>())
@@ -69,34 +71,32 @@ class AccountPage(private val accountDoa: AccountDao, private val entryDao: Entr
     var PersonalCare = MutableStateFlow("")
     var Miscellaneous = MutableStateFlow("")
 
+    var totals = MutableStateFlow(mutableMapOf<String, Float>())
+
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            getAccounts()
-            getEntries()
+            val accountsJob = async { getAccounts() }
+            val entriesJob = async { getEntries() }
+
+            accountsJob.await()
+            entriesJob.await()
 
         }
         getMapEntrys()
 
     }
-    fun getInfo(){
-        viewModelScope.launch(Dispatchers.IO) {
-            getAccounts()
-            getEntries()
 
-        }
-
-    }
 
     suspend fun getAccounts() {
         viewModelScope.launch(Dispatchers.IO) {
-            totals = accountDoa.getAllAccounts()
+            totalsAccount = accountDoa.getAllAccounts()
         }
     }
 
     suspend fun addAccount(account: Account) {
         viewModelScope.launch(Dispatchers.IO) {
-            if(totals.isEmpty()) {
+            if(totalsAccount.isEmpty()) {
                 accountDoa.insert(account)
             }
 
@@ -112,12 +112,18 @@ class AccountPage(private val accountDoa: AccountDao, private val entryDao: Entr
 
     fun getMapEntrys() {
         mapEntrys.value = organizeData(entrys.value)
+        var currentMonth = ""
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        val currentTime = dateFormat.format(Date())
+        currentMonth = "${currentTime.split("-")[0]}-${currentTime.split("-")[1]}"
+        totals.value = getTotals(mapEntrys.value, currentMonth)
+        Log.d("Totals", "Totals: ${totals.value}")
 
     }
 
     fun getTotals() {
-        if (!totals.isEmpty()) {
-            Account.value = totals[0]
+        if (!totalsAccount.isEmpty()) {
+            Account.value = totalsAccount[0]
 
         }
     }
@@ -138,11 +144,7 @@ class AccountPage(private val accountDoa: AccountDao, private val entryDao: Entr
     }
 
     //get totals for each slice of the pie chart
-    fun addTypes(
-        data: List<EntryOb>,
-        Month: String,
-        totals2: MutableMap<String, Float>
-    ): MutableMap<String, Float> {
+    fun addTypes(data: List<EntryOb>, Month: String, totals2: MutableMap<String, Float>): MutableMap<String, Float> {
         var totals = mutableMapOf<String, Float>()
         if (totals2.size == 0) {
             totals["Food/Groceries"] = 0f
@@ -167,8 +169,7 @@ class AccountPage(private val accountDoa: AccountDao, private val entryDao: Entr
         }
 
         for (entry in data) {
-            var entryMonth: String =
-                "${entry.dateTime.split("-")[0]}-${entry.dateTime.split("-")[1]}"
+            var entryMonth: String = "${entry.dateTime.split("-")[0]}-${entry.dateTime.split("-")[1]}"
             if (entryMonth == Month) {
                 totals2[entry.type] = (totals2[entry.type] ?: 0f) + entry.amount.toFloat()
 
@@ -185,29 +186,26 @@ class AccountPage(private val accountDoa: AccountDao, private val entryDao: Entr
 @Composable
 fun SetTotals(viewModel2: AccountPage, navController: NavHostController) {
     //view model data collection
-    val data by viewModel2.mapEntrys.collectAsState()
+
 
     val Account by viewModel2.Account.collectAsState()
 
 
-    LaunchedEffect(viewModel2) {
-        viewModel2.getAccounts()
-        viewModel2.getEntries()
+    LaunchedEffect(key1=Account) {
+        val accountsJob = async { viewModel2.getAccounts() }
+        val entriesJob = async { viewModel2.getEntries() }
+
+        accountsJob.await()
+        entriesJob.await()
         viewModel2.getTotals()
         viewModel2.getMapEntrys()
 
     }
-    viewModel2.getInfo()
 
 
 
+    val totals by viewModel2.totals.collectAsState()
 
-    var currentMonth = ""
-    val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-    val currentTime = dateFormat.format(Date())
-    currentMonth = "${currentTime.split("-")[0]}-${currentTime.split("-")[1]}"
-    var totals by remember { mutableStateOf(mutableMapOf<String, Float>()) }
-    totals = viewModel2.getTotals(data, currentMonth)
 
 
 
@@ -410,26 +408,16 @@ fun SetTotals(viewModel2: AccountPage, navController: NavHostController) {
 
         Button(onClick = {
             var account = Account(0, 0, 0, 0, 0, 0, 0, 0, 0)
-            try {
-                account = Account(
-                    0,
-                    food.toInt(),
-                    utility.toInt(),
-                    recreation.toInt(),
-                    transportation.toInt(),
-                    healthcare.toInt(),
-                    investments.toInt(),
-                    personalCare.toInt(),
-                    miscellaneous.toInt()
-                )
 
-            } catch (NumberFormatException: Exception) {
-                error = NumberFormatException.message.toString()
-                Log.d("NumberFormatException", "NumberFormatException")
-
-            }
             CoroutineScope(Dispatchers.IO).launch {
+                try{
                 viewModel2.updateTotals(Account(0, food.toInt(), utility.toInt(), recreation.toInt(), transportation.toInt(), healthcare.toInt(), investments.toInt(), personalCare.toInt(), miscellaneous.toInt()))
+                    }
+                catch (NumberFormatException: Exception) {
+                    error = NumberFormatException.message.toString()
+                    Log.d("NumberFormatException", "NumberFormatException")
+
+                }
                 viewModel2.getAccounts()
                 viewModel2.getEntries()
 
@@ -463,7 +451,7 @@ fun SetTotals(viewModel2: AccountPage, navController: NavHostController) {
             textAlign = TextAlign.Center
         )
         Button(onClick = {
-            CoroutineScope(Dispatchers.IO).launch() {
+            CoroutineScope(Dispatchers.IO).launch {
                 try {
                     viewModel2.addAccount(
                         Account(

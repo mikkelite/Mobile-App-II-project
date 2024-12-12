@@ -105,7 +105,7 @@ fun ListEntries(navController: NavHostController, entryDao: EntryDao) {
                                 TextButton(onClick = {
                                     //picks yes and deletes entries
                                     showDialog = false
-                                    CoroutineScope(Dispatchers.IO).launch() {
+                                    CoroutineScope(Dispatchers.IO).launch {
                                         entryDao.deleteEntryById(entry.uid)
 
                                     }
