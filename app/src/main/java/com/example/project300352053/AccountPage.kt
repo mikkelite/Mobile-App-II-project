@@ -42,6 +42,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -81,9 +82,15 @@ class AccountPage(private val accountDoa: AccountDao, private val entryDao: Entr
 
             accountsJob.await()
             entriesJob.await()
+            getMapEntrys()
+            getTotals()
+            Log.d("test em", "Totals: ${totals.value}")
+
+
 
         }
-        getMapEntrys()
+
+
 
     }
 
@@ -138,8 +145,9 @@ class AccountPage(private val accountDoa: AccountDao, private val entryDao: Entr
         var totals2 = mutableMapOf<String, Float>()
         for (entry in data) {
             totals2 = addTypes(entry.value, currentMonth, totals2)
-            Log.d("Totals", "Totals: ${totals2}")
+
         }
+        Log.d("Totals", "Totals: ${totals2}")
         return totals2
     }
 
@@ -197,10 +205,14 @@ fun SetTotals(viewModel2: AccountPage, navController: NavHostController) {
 
         accountsJob.await()
         entriesJob.await()
-        viewModel2.getTotals()
         viewModel2.getMapEntrys()
+        viewModel2.getTotals()
+
 
     }
+
+
+
 
 
 
@@ -303,6 +315,7 @@ fun SetTotals(viewModel2: AccountPage, navController: NavHostController) {
         sliceLabelTextColor = Color.Black,
         sliceLabelTextSize = 15.sp,
         sliceLabelTypeface = Typeface.DEFAULT_BOLD,
+
 
 
         labelVisible = true,

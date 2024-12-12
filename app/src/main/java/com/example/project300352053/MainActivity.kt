@@ -81,19 +81,20 @@ class MainActivity : ComponentActivity() {
                 val entryDao = db.EntryDao()
                 val accountDao=db.AccountDao()
                 val viewModel: AddExpenseViewModel= AddExpenseViewModel(entryDao)
-                val accountPage=AccountPage(accountDao,entryDao)
+                var accountPage:AccountPage= AccountPage(accountDao,entryDao)
+
 
 
                 NavHost(
                     navController=navController,
                     startDestination = "MainScreen"
                 ){
-                    composable("MainScreen"){ CreateMainPage(navController, entryDao,accountDao)}
+                    composable("MainScreen"){ CreateMainPage(navController, entryDao,accountDao,accountPage)}
                     composable("account"){ SetTotals(accountPage,navController) }
                     composable("addExpense"){ AddExpense(navController,viewModel) }
                     composable("summary"){ Summary(navController,entryDao) }
                     composable("listEntries"){ ListEntries(navController,entryDao) }
-                    composable("exit"){CreateMainPage(navController, entryDao,accountDao)  }
+                    composable("exit"){CreateMainPage(navController, entryDao,accountDao,accountPage)  }
                     composable("exitApp"){ exit() }
 
                 }
@@ -108,7 +109,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(DelicateCoroutinesApi::class)
 @Composable
-fun CreateMainPage(navController: NavHostController, entryDao: EntryDao, accountDao: AccountDao) {
+fun CreateMainPage(navController: NavHostController, entryDao: EntryDao, accountDao: AccountDao,accountPage: AccountPage) {
     val context= LocalContext.current
     Box(
         modifier = Modifier.fillMaxSize()
@@ -180,8 +181,13 @@ fun CreateMainPage(navController: NavHostController, entryDao: EntryDao, account
                 }
                 //account button
                 Button(
-                    onClick = { navController.navigate("account") },
+                    onClick = {navController.navigate("account")
+                            CoroutineScope(Dispatchers.IO).launch {
+                                accountPage.getEntries()
+                            }
+                      },
                     shape = androidx.compose.foundation.shape.CutCornerShape(0.dp),
+
                     //colors for the buttons
                     colors = ButtonColors(
                         contentColor = Color.hsl(100F, .30F, .65F),
